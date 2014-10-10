@@ -17,10 +17,9 @@ The intuition behind swarm descent is to provide an alternative to gradient
 TODOs:
 - Test on simple datasets/cost functions
 -   Evaluate timing/efficacy with various knob settings
-- Implement 'dynasty' stopping condition: same bee is best bee for n
-  consecutive steps
 - figure out that algorithm to build the 'spread' formation. check out that
   cool algorithm visualization page I shared to piazza.
+  https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
 - Stopping condition: some number of bees converge into an epsilon-small
   neighborhood around the best bee? Might not be better than what we have
   already.
@@ -53,7 +52,7 @@ class Swarm(object):
     def __init__(self, cost_function, param_shape, size=100,
                  formation="random", spread_dist=20.0, learning_rate=.2,
                  stray_rate=.2, stop_criteria="fast", stop_iters=1000,
-                 n_workers=3, worker_eps=.01, reign_stop=20):
+                 n_workers=5, worker_eps=.001, reign_stop=20):
         self.J = cost_function
         self.param_shape = param_shape
         self.spread_dist = spread_dist
@@ -82,7 +81,14 @@ class Swarm(object):
                 s.append(Bee((np.random.rand(a, b) - .5) *
                              self.spread_dist, self))
         elif self.formation == 'spread':
-            # TODO
+            '''
+            Algorithm: maintain a "frontier" of outermost bees. Continually
+              generate random params just outside the range of a frontier bee.
+              If its params are within some other bee's space, try again. If it
+              is clear of all existing frontiers, build a new bee there! Repeat
+              until bee array reaches its desired size.
+            '''
+            # for i in range(self.size):
             pass
         else:
             # future formations?
@@ -240,12 +246,15 @@ def dist(v1, v2):
 def test_cost_function(X, y, params):
     '''
     For testing purposes: simply returns the euclidean distance from the params
-      vector to the origin.
+      vector to the origin. X and y are ignored.
     '''
     return dist(params, np.zeros(params.shape))
 
 
 def RMSE(X, y, params):
+    '''
+    Simple linear regression cost function for testing
+    '''
     params = params.reshape(len(params), 1)
     y = y.reshape(len(y), 1)
     RMSE = np.sqrt(((np.dot(X, params)-y)**2).mean())
